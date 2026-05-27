@@ -24,6 +24,18 @@
             "type": "relation",
             "relation": "manyToOne",
             "target": "plugin::users-permissions.user"
+        },
+        "dueDate": {
+            "type": "date"
+        },
+        "priority": {
+            "type": "enumeration",
+            "enum": [
+                "low",
+                "medium",
+                "high"
+            ],
+            "default": "medium"
         }
     }
 }
