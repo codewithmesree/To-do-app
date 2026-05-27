@@ -5,7 +5,7 @@ import { api } from '@/lib/api';
 import { useAuthStore } from '@/store/auth';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
-import { Trash2, Calendar, Search } from 'lucide-react';
+import { Trash2, Calendar, Search, Edit2, X, Check } from 'lucide-react';
 
 interface Todo {
   id: number;
@@ -27,6 +27,12 @@ export default function Dashboard() {
   // Filters
   const [searchQuery, setSearchQuery] = useState('');
   const [filter, setFilter] = useState<'all' | 'completed' | 'pending'>('all');
+
+  // Editing state
+  const [editingTask, setEditingTask] = useState<Todo | null>(null);
+  const [editTitle, setEditTitle] = useState('');
+  const [editDueDate, setEditDueDate] = useState('');
+  const [editPriority, setEditPriority] = useState<'low' | 'medium' | 'high'>('medium');
 
   useEffect(() => {
     fetchTodos();
@@ -85,6 +91,38 @@ export default function Dashboard() {
     try {
       await api.delete(`/todos/${documentId}`);
       setTodos(todos.filter((t) => t.documentId !== documentId));
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  const startEditing = (todo: Todo) => {
+    setEditingTask(todo);
+    setEditTitle(todo.title);
+    setEditDueDate(todo.dueDate ? new Date(todo.dueDate).toISOString().split('T')[0] : '');
+    setEditPriority(todo.priority);
+  };
+
+  const cancelEditing = () => {
+    setEditingTask(null);
+  };
+
+  const handleEditSubmit = async (e: React.FormEvent, documentId: string) => {
+    e.preventDefault();
+    if (!editTitle.trim()) return;
+
+    try {
+      const res = await api.put(`/todos/${documentId}`, {
+        data: {
+          title: editTitle,
+          dueDate: editDueDate || null,
+          priority: editPriority,
+        },
+      });
+      setTodos(
+        todos.map((t) => (t.documentId === documentId ? res.data.data : t))
+      );
+      setEditingTask(null);
     } catch (err) {
       console.error(err);
     }
@@ -187,44 +225,94 @@ export default function Dashboard() {
               filteredTodos.map((todo) => (
                 <div
                   key={todo.documentId}
-                  className={`flex flex-col sm:flex-row sm:items-center justify-between p-4 rounded-xl border transition-all gap-4 ${
+                  className={`p-4 rounded-xl border transition-all ${
                     todo.isCompleted ? 'bg-gray-50 border-gray-100' : 'bg-white border-gray-200 hover:border-brand-primary/30 hover:shadow-sm'
                   }`}
                 >
-                  <div className="flex items-start sm:items-center gap-4">
-                    <input
-                      type="checkbox"
-                      checked={todo.isCompleted}
-                      onChange={() => handleToggle(todo.documentId, todo.isCompleted)}
-                      className="w-5 h-5 mt-1 sm:mt-0 rounded border-gray-300 text-brand-primary focus:ring-brand-primary cursor-pointer transition-colors"
-                    />
-                    <div className="flex flex-col">
-                      <span
-                        className={`text-lg transition-all ${
-                          todo.isCompleted ? 'line-through text-gray-400' : 'text-gray-800 font-medium'
-                        }`}
-                      >
-                        {todo.title}
-                      </span>
-                      {todo.dueDate && (
-                        <span className="text-xs text-gray-500 mt-1 flex items-center gap-1">
-                          <Calendar size={12} />
-                          {new Date(todo.dueDate).toLocaleDateString()}
+                  {editingTask?.documentId === todo.documentId ? (
+                    <form onSubmit={(e) => handleEditSubmit(e, todo.documentId)} className="flex flex-col gap-4">
+                      <Input
+                        type="text"
+                        value={editTitle}
+                        onChange={(e) => setEditTitle(e.target.value)}
+                        className="flex-1 bg-white"
+                        autoFocus
+                      />
+                      <div className="flex flex-col sm:flex-row gap-4">
+                        <div className="flex-1 flex items-center gap-2 bg-white rounded-lg border border-gray-300 px-3 py-2 focus-within:ring-2 focus-within:ring-brand-primary">
+                          <Calendar size={18} className="text-gray-400" />
+                          <input
+                            type="date"
+                            value={editDueDate}
+                            onChange={(e) => setEditDueDate(e.target.value)}
+                            className="w-full text-sm outline-none text-gray-700 bg-transparent"
+                          />
+                        </div>
+                        <select
+                          value={editPriority}
+                          onChange={(e) => setEditPriority(e.target.value as 'low' | 'medium' | 'high')}
+                          className="flex-1 bg-white rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-700 outline-none focus:ring-2 focus:ring-brand-primary"
+                        >
+                          <option value="low">Low Priority</option>
+                          <option value="medium">Medium Priority</option>
+                          <option value="high">High Priority</option>
+                        </select>
+                        <div className="flex gap-2">
+                          <Button type="submit" className="px-3 bg-green-500 hover:bg-green-600 sm:w-auto">
+                            <Check size={18} />
+                          </Button>
+                          <Button type="button" onClick={cancelEditing} className="px-3 bg-gray-400 hover:bg-gray-500 sm:w-auto">
+                            <X size={18} />
+                          </Button>
+                        </div>
+                      </div>
+                    </form>
+                  ) : (
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                      <div className="flex items-start sm:items-center gap-4">
+                        <input
+                          type="checkbox"
+                          checked={todo.isCompleted}
+                          onChange={() => handleToggle(todo.documentId, todo.isCompleted)}
+                          className="w-5 h-5 mt-1 sm:mt-0 rounded border-gray-300 text-brand-primary focus:ring-brand-primary cursor-pointer transition-colors"
+                        />
+                        <div className="flex flex-col">
+                          <span
+                            className={`text-lg transition-all ${
+                              todo.isCompleted ? 'line-through text-gray-400' : 'text-gray-800 font-medium'
+                            }`}
+                          >
+                            {todo.title}
+                          </span>
+                          {todo.dueDate && (
+                            <span className="text-xs text-gray-500 mt-1 flex items-center gap-1">
+                              <Calendar size={12} />
+                              {new Date(todo.dueDate).toLocaleDateString()}
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                      <div className="flex items-center justify-between sm:justify-end w-full sm:w-auto gap-4 pl-9 sm:pl-0">
+                        <span className={`text-xs font-semibold px-2.5 py-1 rounded-full border ${getPriorityColor(todo.priority)}`}>
+                          {todo.priority?.toUpperCase() || 'MEDIUM'}
                         </span>
-                      )}
+                        <div className="flex gap-2">
+                          <Button
+                            onClick={() => startEditing(todo)}
+                            className="px-3 py-1.5 !bg-blue-50 !text-blue-500 hover:!bg-blue-100 shadow-none border-0 transition-colors h-auto"
+                          >
+                            <Edit2 size={16} />
+                          </Button>
+                          <Button
+                            onClick={() => handleDelete(todo.documentId)}
+                            className="px-3 py-1.5 !bg-red-50 !text-red-500 hover:!bg-red-100 shadow-none border-0 transition-colors h-auto"
+                          >
+                            <Trash2 size={16} />
+                          </Button>
+                        </div>
+                      </div>
                     </div>
-                  </div>
-                  <div className="flex items-center justify-between sm:justify-end w-full sm:w-auto gap-4 pl-9 sm:pl-0">
-                    <span className={`text-xs font-semibold px-2.5 py-1 rounded-full border ${getPriorityColor(todo.priority)}`}>
-                      {todo.priority?.toUpperCase() || 'MEDIUM'}
-                    </span>
-                    <Button
-                      onClick={() => handleDelete(todo.documentId)}
-                      className="px-3 py-1.5 !bg-red-50 !text-red-500 hover:!bg-red-100 shadow-none border-0 transition-colors h-auto"
-                    >
-                      <Trash2 size={16} />
-                    </Button>
-                  </div>
+                  )}
                 </div>
               ))
             )}
