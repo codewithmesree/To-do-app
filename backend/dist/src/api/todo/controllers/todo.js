@@ -7,13 +7,11 @@ exports.default = strapi_1.factories.createCoreController('api::todo.todo', ({ s
         if (!user) {
             return ctx.badRequest('No authenticated user found');
         }
-        // Explicitly cast to Record<string, any>
-        const currentFilters = ctx.query.filters || {};
-        ctx.query.filters = {
-            ...currentFilters,
-            user: user.id,
-        };
-        return await super.find(ctx);
+        const todos = await strapi.documents('api::todo.todo').findMany({
+            filters: { user: user.documentId },
+            sort: ctx.query.sort || 'createdAt:desc',
+        });
+        return { data: todos, meta: {} };
     },
     async create(ctx) {
         const user = ctx.state.user;
@@ -21,11 +19,13 @@ exports.default = strapi_1.factories.createCoreController('api::todo.todo', ({ s
             return ctx.badRequest('No authenticated user found');
         }
         const requestBody = ctx.request.body;
-        requestBody.data = {
-            ...requestBody.data,
-            user: user.id,
-        };
-        return await super.create(ctx);
+        const todo = await strapi.documents('api::todo.todo').create({
+            data: {
+                ...requestBody.data,
+                user: user.documentId,
+            },
+        });
+        return { data: todo };
     },
     async update(ctx) {
         const user = ctx.state.user;
@@ -34,13 +34,18 @@ exports.default = strapi_1.factories.createCoreController('api::todo.todo', ({ s
         }
         const { id } = ctx.params;
         const todos = await strapi.documents('api::todo.todo').findMany({
-            filters: { documentId: id, user: user.id },
+            filters: { documentId: id, user: user.documentId },
         });
         const todoList = Array.isArray(todos) ? todos : (todos ? [todos] : []);
         if (todoList.length === 0) {
             return ctx.unauthorized("You cannot update this todo.");
         }
-        return await super.update(ctx);
+        const requestBody = ctx.request.body;
+        const updatedTodo = await strapi.documents('api::todo.todo').update({
+            documentId: id,
+            data: requestBody.data,
+        });
+        return { data: updatedTodo };
     },
     async delete(ctx) {
         const user = ctx.state.user;
@@ -49,12 +54,15 @@ exports.default = strapi_1.factories.createCoreController('api::todo.todo', ({ s
         }
         const { id } = ctx.params;
         const todos = await strapi.documents('api::todo.todo').findMany({
-            filters: { documentId: id, user: user.id },
+            filters: { documentId: id, user: user.documentId },
         });
         const todoList = Array.isArray(todos) ? todos : (todos ? [todos] : []);
         if (todoList.length === 0) {
             return ctx.unauthorized("You cannot delete this todo.");
         }
-        return await super.delete(ctx);
+        await strapi.documents('api::todo.todo').delete({
+            documentId: id,
+        });
+        return { data: { documentId: id } };
     }
 }));

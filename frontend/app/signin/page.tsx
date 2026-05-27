@@ -6,10 +6,12 @@ import { api } from '@/lib/api';
 import { useAuthStore } from '@/store/auth';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
+import { Eye, EyeOff } from 'lucide-react';
 
 export default function SignIn() {
   const [identifier, setIdentifier] = useState('');
   const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState('');
   const router = useRouter();
   const setAuth = useAuthStore((state) => state.setAuth);
@@ -30,12 +32,12 @@ export default function SignIn() {
 
   return (
     <div className="flex-1 flex items-center justify-center">
-      <form onSubmit={handleSubmit} className="bg-white p-8 border-4 border-black shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] w-full max-w-md">
-        <h2 className="text-4xl font-black mb-6 uppercase">Sign In</h2>
-        {error && <p className="bg-red-400 border-2 border-black p-2 font-bold mb-4">{error}</p>}
-        <div className="space-y-4 mb-6">
+      <form onSubmit={handleSubmit} className="bg-white p-8 rounded-2xl shadow-xl w-full max-w-md border border-gray-100">
+        <h2 className="text-3xl font-bold mb-6 text-gray-900">Welcome Back</h2>
+        {error && <p className="bg-red-50 text-red-600 rounded-lg p-3 text-sm mb-4">{error}</p>}
+        <div className="space-y-5 mb-6">
           <div>
-            <label className="block font-bold mb-2">Email or Username</label>
+            <label className="block font-medium text-sm text-gray-700 mb-2">Email or Username</label>
             <Input
               type="text"
               value={identifier}
@@ -44,16 +46,25 @@ export default function SignIn() {
             />
           </div>
           <div>
-            <label className="block font-bold mb-2">Password</label>
-            <Input
-              type="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              required
-            />
+            <label className="block font-medium text-sm text-gray-700 mb-2">Password</label>
+            <div className="relative">
+              <Input
+                type={showPassword ? 'text' : 'password'}
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                required
+              />
+              <button
+                type="button"
+                onClick={() => setShowPassword(!showPassword)}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 focus:outline-none"
+              >
+                {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+              </button>
+            </div>
           </div>
         </div>
-        <Button type="submit" className="w-full bg-pastel-blue hover:bg-blue-300">
+        <Button type="submit" className="w-full">
           Sign In
         </Button>
       </form>

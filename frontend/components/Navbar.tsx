@@ -16,17 +16,17 @@ export function Navbar() {
   };
 
   return (
-    <nav className="flex justify-between items-center p-4 border-b-4 border-black bg-white">
-      <Link href="/" className="text-2xl font-black uppercase tracking-tighter">
+    <nav className="flex justify-between items-center p-4 bg-white border-b border-gray-100 shadow-sm">
+      <Link href="/" className="text-2xl font-bold tracking-tight text-brand-primary">
         TaskForge
       </Link>
       <div>
         {user ? (
           <div className="flex items-center gap-4">
-            <span className="font-bold border-2 border-black px-3 py-1 bg-pastel-blue">
+            <span className="font-medium text-gray-700 px-3 py-1 bg-brand-light rounded-full text-sm">
               {user.username}
             </span>
-            <Button onClick={handleLogout} className="flex items-center gap-2 bg-red-400 hover:bg-red-500">
+            <Button onClick={handleLogout} className="flex items-center gap-2 !bg-gray-100 !text-gray-700 hover:!bg-gray-200 shadow-none border-0">
               <LogOut size={18} />
               Logout
             </Button>
@@ -34,10 +34,10 @@ export function Navbar() {
         ) : (
           <div className="flex gap-4">
             <Link href="/signin">
-              <Button>Sign In</Button>
+              <Button className="!bg-white !text-gray-700 border border-gray-300 hover:!bg-gray-50 shadow-none">Sign In</Button>
             </Link>
             <Link href="/signup">
-              <Button className="bg-yellow-300">Sign Up</Button>
+              <Button>Sign Up</Button>
             </Link>
           </div>
         )}

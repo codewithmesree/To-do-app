@@ -26,9 +26,6 @@ export default function Dashboard() {
 
   const fetchTodos = async () => {
     try {
-      // Strapi v5 uses documentId for most operations instead of ID, but both are often returned.
-      // We will filter by user if Custom User Filtering is enabled.
-      // Assuming Custom User Filtering overrides the controller to automatically filter.
       const res = await api.get('/todos?sort=createdAt:desc');
       setTodos(res.data.data);
     } catch (err) {
@@ -43,7 +40,6 @@ export default function Dashboard() {
     if (!newTodo.trim()) return;
 
     try {
-      // Pass the user to connect it, though custom controller might do it automatically.
       const res = await api.post('/todos', {
         data: {
           title: newTodo,
@@ -83,9 +79,9 @@ export default function Dashboard() {
   };
 
   return (
-    <div className="flex-1 flex flex-col items-center">
-      <div className="w-full max-w-2xl bg-white p-8 border-4 border-black shadow-[8px_8px_0px_0px_rgba(0,0,0,1)]">
-        <h2 className="text-4xl font-black mb-8 uppercase">Your Tasks</h2>
+    <div className="flex-1 flex flex-col items-center pt-8">
+      <div className="w-full max-w-2xl bg-white p-8 rounded-2xl shadow-xl border border-gray-100">
+        <h2 className="text-3xl font-bold mb-8 text-gray-900">Your Tasks</h2>
 
         <form onSubmit={handleAdd} className="flex gap-4 mb-8">
           <Input
@@ -95,33 +91,35 @@ export default function Dashboard() {
             onChange={(e) => setNewTodo(e.target.value)}
             className="flex-1"
           />
-          <Button type="submit" className="bg-pastel-blue hover:bg-blue-300">
+          <Button type="submit">
             Add Task
           </Button>
         </form>
 
         {loading ? (
-          <div className="text-center font-bold">Loading tasks...</div>
+          <div className="text-center text-gray-500 py-8">Loading tasks...</div>
         ) : (
-          <div className="space-y-4">
+          <div className="space-y-3">
             {todos.length === 0 ? (
-              <p className="text-center font-bold text-gray-500">No tasks found. Add one!</p>
+              <p className="text-center text-gray-500 py-8">No tasks found. Add one!</p>
             ) : (
               todos.map((todo) => (
                 <div
                   key={todo.documentId}
-                  className="flex items-center justify-between p-4 border-2 border-black bg-gray-50"
+                  className={`flex items-center justify-between p-4 rounded-xl border transition-all ${
+                    todo.isCompleted ? 'bg-gray-50 border-gray-100' : 'bg-white border-gray-200 hover:border-brand-primary/30 hover:shadow-sm'
+                  }`}
                 >
                   <div className="flex items-center gap-4">
                     <input
                       type="checkbox"
                       checked={todo.isCompleted}
                       onChange={() => handleToggle(todo.documentId, todo.isCompleted)}
-                      className="w-6 h-6 border-2 border-black appearance-none checked:bg-black checked:after:content-['✓'] checked:after:text-white checked:after:flex checked:after:items-center checked:after:justify-center transition-all cursor-pointer shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] hover:shadow-[1px_1px_0px_0px_rgba(0,0,0,1)] hover:translate-x-[1px] hover:translate-y-[1px]"
+                      className="w-5 h-5 rounded border-gray-300 text-brand-primary focus:ring-brand-primary cursor-pointer transition-colors"
                     />
                     <span
-                      className={`text-xl font-bold ${
-                        todo.isCompleted ? 'line-through text-gray-400' : ''
+                      className={`text-lg transition-all ${
+                        todo.isCompleted ? 'line-through text-gray-400' : 'text-gray-700'
                       }`}
                     >
                       {todo.title}
@@ -129,9 +127,9 @@ export default function Dashboard() {
                   </div>
                   <Button
                     onClick={() => handleDelete(todo.documentId)}
-                    className="px-3 py-1 bg-red-400 hover:bg-red-500"
+                    className="px-3 py-1.5 !bg-red-50 !text-red-500 hover:!bg-red-100 shadow-none border-0 transition-colors"
                   >
-                    <Trash2 size={20} />
+                    <Trash2 size={18} />
                   </Button>
                 </div>
               ))
